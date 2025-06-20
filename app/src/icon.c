@@ -202,10 +202,9 @@ load_from_path(const char *path) {
         goto error;
     }
 
-    int bits_per_pixel = av_get_bits_per_pixel(desc);
     SDL_Surface *surface =
-        SDL_CreateSurfaceFrom(frame->data[0], frame->width, frame->height,
-                              frame->linesize[0], format);
+        SDL_CreateSurfaceFrom(frame->width, frame->height, format,
+                              frame->data[0], frame->linesize[0]);
 
     if (!surface) {
         LOGE("Could not create icon surface");
@@ -237,8 +236,13 @@ load_from_path(const char *path) {
 #endif
         }
 
-        SDL_Palette *palette = surface->format->palette;
-        assert(palette);
+        SDL_Palette *palette = SDL_CreateSurfacePalette(surface);
+        if (!palette) {
+            LOGE("Could not create palette");
+            SDL_DestroySurface(surface);
+            goto error;
+        }
+
         bool ok = SDL_SetPaletteColors(palette, colors, 0, 256);
         if (!ok) {
             LOGE("Could not set palette colors");
@@ -247,7 +251,20 @@ load_from_path(const char *path) {
         }
     }
 
-    surface->userdata = frame; // frame owns the data
+    SDL_PropertiesID props = SDL_GetSurfaceProperties(surface);
+    if (!props) {
+        LOGE("Could not get surface properties: %s", SDL_GetError());
+        SDL_DestroySurface(surface);
+        goto error;
+    }
+
+    // frame owns the data
+    bool ok = SDL_SetPointerProperty(props, "sc_frame", frame);
+    if (!ok) {
+        LOGE("Could not get surface properties: %s", SDL_GetError());
+        SDL_DestroySurface(surface);
+        goto error;
+    }
 
     return surface;
 
@@ -270,7 +287,9 @@ scrcpy_icon_load(void) {
 
 void
 scrcpy_icon_destroy(SDL_Surface *icon) {
-    AVFrame *frame = icon->userdata;
+    SDL_PropertiesID props = SDL_GetSurfaceProperties(icon);
+    assert(props);
+    AVFrame *frame = SDL_GetPointerProperty(props, "sc_frame", NULL);
     assert(frame);
     av_frame_free(&frame);
     SDL_DestroySurface(icon);

@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <string.h>
-#include <SDL3/SDL_gamecontroller.h>
+#include <SDL3/SDL_gamepad.h>
 
 #include "hid/hid_gamepad.h"
 #include "input_events.h"
