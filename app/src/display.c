@@ -256,11 +256,11 @@ sc_display_update_texture_internal(struct sc_display *display,
         SDL_SetYUVConversionMode(sdl_color_range);
     }
 
-    int ret = SDL_UpdateYUVTexture(display->texture, NULL,
+    bool ok = SDL_UpdateYUVTexture(display->texture, NULL,
                                    frame->data[0], frame->linesize[0],
                                    frame->data[1], frame->linesize[1],
                                    frame->data[2], frame->linesize[2]);
-    if (ret) {
+    if (!ok) {
         LOGD("Could not update texture: %s", SDL_GetError());
         return false;
     }
@@ -306,8 +306,8 @@ sc_display_render(struct sc_display *display, const SDL_Rect *geometry,
     SDL_Texture *texture = display->texture;
 
     if (orientation == SC_ORIENTATION_0) {
-        int ret = SDL_RenderTexture(renderer, texture, NULL, geometry);
-        if (ret) {
+        bool ok = SDL_RenderTexture(renderer, texture, NULL, geometry);
+        if (!ok) {
             LOGE("Could not render texture: %s", SDL_GetError());
             return SC_DISPLAY_RESULT_ERROR;
         }
@@ -330,9 +330,9 @@ sc_display_render(struct sc_display *display, const SDL_Rect *geometry,
         SDL_FlipMode flip = sc_orientation_is_mirror(orientation)
                               ? SDL_FLIP_HORIZONTAL : 0;
 
-        int ret = SDL_RenderTextureRotated(renderer, texture, NULL, dstrect, angle,
+        bool ok = SDL_RenderTextureRotated(renderer, texture, NULL, dstrect, angle,
                                    NULL, flip);
-        if (ret) {
+        if (!ok) {
             LOGE("Could not render texture: %s", SDL_GetError());
             return SC_DISPLAY_RESULT_ERROR;
         }

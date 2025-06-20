@@ -239,8 +239,8 @@ load_from_path(const char *path) {
 
         SDL_Palette *palette = surface->format->palette;
         assert(palette);
-        int ret = SDL_SetPaletteColors(palette, colors, 0, 256);
-        if (ret) {
+        bool ok = SDL_SetPaletteColors(palette, colors, 0, 256);
+        if (!ok) {
             LOGE("Could not set palette colors");
             SDL_DestroySurface(surface);
             goto error;
