@@ -8,6 +8,7 @@
 #include "icon.h"
 #include "options.h"
 #include "util/log.h"
+#include "util/window.h"
 
 #define DISPLAY_MARGINS 96
 
@@ -394,7 +395,8 @@ sc_screen_init(struct sc_screen *screen,
     }
 
     // The window will be positioned and sized on first video frame
-    screen->window = SDL_CreateWindow(title, x, y, width, height, window_flags);
+    screen->window =
+        sc_create_sdl_window(title, x, y, width, height, window_flags);
     if (!screen->window) {
         LOGE("Could not create window: %s", SDL_GetError());
         goto error_destroy_fps_counter;

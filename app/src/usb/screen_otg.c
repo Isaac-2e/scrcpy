@@ -7,6 +7,7 @@
 #include "options.h"
 #include "util/acksync.h"
 #include "util/log.h"
+#include "util/window.c"
 
 static void
 sc_screen_otg_render(struct sc_screen_otg *screen) {
@@ -42,13 +43,14 @@ sc_screen_otg_init(struct sc_screen_otg *screen,
         window_flags |= SDL_WINDOW_BORDERLESS;
     }
 
-    screen->window = SDL_CreateWindow(title, x, y, width, height, window_flags);
+    screen->window =
+        sc_create_sdl_window(title, x, y, width, height, window_flags);
     if (!screen->window) {
         LOGE("Could not create window: %s", SDL_GetError());
         return false;
     }
 
-    screen->renderer = SDL_CreateRenderer(screen->window, NULL, 0);
+    screen->renderer = SDL_CreateRenderer(screen->window, NULL);
     if (!screen->renderer) {
         LOGE("Could not create renderer: %s", SDL_GetError());
         goto error_destroy_window;

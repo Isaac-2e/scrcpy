@@ -63,6 +63,7 @@ src = [
     'src/util/thread.c',
     'src/util/tick.c',
     'src/util/timeout.c',
+    'src/util/window.c',
 ]
 
 conf = configuration_data()
