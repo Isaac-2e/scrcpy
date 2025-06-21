@@ -889,8 +889,8 @@ sc_input_manager_process_mouse_wheel(struct sc_input_manager *im,
     }
 
     // mouse_x and mouse_y are expressed in pixels relative to the window
-    int mouse_x;
-    int mouse_y;
+    float mouse_x;
+    float mouse_y;
     uint32_t buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
     (void) buttons; // Actual buttons are tracked manually to ignore shortcuts
 
@@ -993,8 +993,8 @@ is_apk(const char *file) {
 static void
 sc_input_manager_process_file(struct sc_input_manager *im,
                               const SDL_DropEvent *event) {
-    char *file = strdup(event->file);
-    SDL_free(event->file);
+    assert(event->type == SDL_EVENT_DROP_FILE);
+    char *file = strdup(event->data);
     if (!file) {
         LOG_OOM();
         return;
