@@ -355,10 +355,16 @@ static void
 init_sdl_gamepads(void) {
     // Trigger a SDL_CONTROLLERDEVICEADDED event for all gamepads already
     // connected
-    int num_joysticks = SDL_NumJoysticks();
-    for (int i = 0; i < num_joysticks; ++i) {
-        if (/* FIXME MIGRATION: check for valid instance */
-            SDL_IsGamepad(GetJoystickInstanceFromIndex(i))) {
+    int count;
+    SDL_JoystickID *joysticks = SDL_GetJoysticks(&count);
+    if (!joysticks) {
+        LOGE("Could not list joysticks: %s", SDL_GetError());
+        return;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        SDL_JoystickID joystick = joysticks[i];
+        if (SDL_IsGamepad(joystick)) {
             SDL_Event event;
             event.gdevice.type = SDL_EVENT_GAMEPAD_ADDED;
             event.gdevice.which = i;
