@@ -30,16 +30,13 @@ sc_display_init_novideo_icon(struct sc_display *display,
 bool
 sc_display_init(struct sc_display *display, SDL_Window *window,
                 SDL_Surface *icon_novideo, bool mipmaps) {
-    display->renderer =
-        SDL_CreateRenderer(window, NULL, SDL_RENDERER_ACCELERATED);
+    display->renderer = SDL_CreateRenderer(window, NULL);
     if (!display->renderer) {
         LOGE("Could not create renderer: %s", SDL_GetError());
         return false;
     }
 
-    SDL_RendererInfo renderer_info;
-    int r = SDL_GetRendererInfo(display->renderer, &renderer_info);
-    const char *renderer_name = r ? NULL : renderer_info.name;
+    const char *renderer_name = SDL_GetRendererName(display->renderer);
     LOGI("Renderer: %s", renderer_name ? renderer_name : "(unknown)");
 
     display->mipmaps = false;
