@@ -740,8 +740,7 @@ void
 sc_screen_toggle_fullscreen(struct sc_screen *screen) {
     assert(screen->video);
 
-    uint32_t new_mode = screen->fullscreen ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP;
-    if (SDL_SetWindowFullscreen(screen->window, new_mode)) {
+    if (SDL_SetWindowFullscreen(screen->window, !screen->fullscreen)) {
         LOGW("Could not switch fullscreen mode: %s", SDL_GetError());
         return;
     }
@@ -802,6 +801,8 @@ sc_screen_resize_to_pixel_perfect(struct sc_screen *screen) {
 
 bool
 sc_screen_handle_event(struct sc_screen *screen, const SDL_Event *event) {
+    // !video implies !has_frame
+    assert(screen->video || !screen->has_frame);
     switch (event->type) {
         case SC_EVENT_SCREEN_INIT_SIZE: {
             // The initial size is passed via screen->frame_size
@@ -820,45 +821,38 @@ sc_screen_handle_event(struct sc_screen *screen, const SDL_Event *event) {
             }
             return true;
         }
-        case SDL_WINDOWEVENT:
-            if (!screen->video
-                    && event->window.event == SDL_EVENT_WINDOW_EXPOSED) {
+        case SDL_EVENT_WINDOW_EXPOSED:
+            if (!screen->video) {
                 sc_screen_render_novideo(screen);
+            } else if (screen->has_frame) {
+                sc_screen_render(screen, true);
             }
-
-            // !video implies !has_frame
-            assert(screen->video || !screen->has_frame);
-            if (!screen->has_frame) {
-                // Do nothing
+            return true;
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+            if (screen->has_frame) {
+                sc_screen_render(screen, true);
+            }
+            return true;
+        case SDL_EVENT_WINDOW_MAXIMIZED:
+            screen->maximized = true;
+            return true;
+        case SDL_EVENT_WINDOW_MINIMIZED:
+            screen->minimized = true;
+            return true;
+        case SDL_EVENT_WINDOW_RESTORED:
+            if (screen->fullscreen) {
+                // On Windows, in maximized+fullscreen, disabling
+                // fullscreen mode unexpectedly triggers the "restored"
+                // then "maximized" events, leaving the window in a
+                // weird state (maximized according to the events, but
+                // not maximized visually).
                 return true;
             }
-            switch (event->window.event) {
-                case SDL_EVENT_WINDOW_EXPOSED:
-                    sc_screen_render(screen, true);
-                    break;
-                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-                    sc_screen_render(screen, true);
-                    break;
-                case SDL_EVENT_WINDOW_MAXIMIZED:
-                    screen->maximized = true;
-                    break;
-                case SDL_EVENT_WINDOW_MINIMIZED:
-                    screen->minimized = true;
-                    break;
-                case SDL_EVENT_WINDOW_RESTORED:
-                    if (screen->fullscreen) {
-                        // On Windows, in maximized+fullscreen, disabling
-                        // fullscreen mode unexpectedly triggers the "restored"
-                        // then "maximized" events, leaving the window in a
-                        // weird state (maximized according to the events, but
-                        // not maximized visually).
-                        break;
-                    }
-                    screen->maximized = false;
-                    screen->minimized = false;
-                    apply_pending_resize(screen);
-                    sc_screen_render(screen, true);
-                    break;
+            screen->maximized = false;
+            screen->minimized = false;
+            if (screen->has_frame) {
+                apply_pending_resize(screen);
+                sc_screen_render(screen, true);
             }
             return true;
     }
