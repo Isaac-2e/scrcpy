@@ -112,13 +112,19 @@ cc = meson.get_compiler('c')
 
 static = get_option('static')
 
+sdl2_proj = subproject('sdl2')
+sdl2_dep = sdl2_proj.get_variable('sdl2_dep')
+
+meson.override_dependency('sdl2', sdl2_dep)
+
 dependencies = [
     dependency('libavformat', version: '>= 57.33', static: static),
     dependency('libavcodec', version: '>= 57.37', static: static),
     dependency('libavutil', static: static),
     dependency('libswresample', static: static),
-    dependency('sdl2', version: '>= 2.0.5', static: static),
+    dependency('sdl2', static: static),
 ]
+#dependency('sdl2', version: '>= 2.0.5', static: static),
 
 if v4l2_support
     dependencies += dependency('libavdevice', static: static)
